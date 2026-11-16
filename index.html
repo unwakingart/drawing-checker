@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drawing Checker</title>
+<meta name="description" content="Put your drawing over the photo you drew from: see where the shape drifts and whether your darks are as dark as the photo's. A free art tool.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Drawing Checker · unwakingart">
+<meta property="og:description" content="Put your drawing over the photo you drew from: see where the shape drifts and whether your darks are as dark as the photo's. A free art tool.">
+<meta property="og:image" content="https://unwakingart.github.io/drawing-checker/preview.jpg">
+<meta property="og:url" content="https://unwakingart.github.io/drawing-checker/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&family=DM+Mono:wght@400&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap">
+<style>
+
+:root { --sx-w: 1300px; --ivory: #F1EBDD; --paper: #FBF8F1; --ink: #292B26; --soft: #5F615A; --line: rgba(41,43,38,.22); --edge: rgba(41,43,38,.28); --accent: #D9603F; --cobalt: #2F55D4; --sage: #D9E2D5; --coral: #E9B9A7; --or: #EF7A56; --bl: #2E4EA0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--ivory); }
+body { font: 400 15px/1.5 Figtree, system-ui, sans-serif; color: var(--ink); background: var(--ivory) url(paper.jpg) 0 0 / 900px repeat; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.mono { font: 400 11.5px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; }
+.wordmark { font: 800 23px/1 Figtree, sans-serif; letter-spacing: -.045em; position: relative; text-decoration: none; white-space: nowrap; }
+.wordmark .i { position: relative; }
+.wordmark svg { position: absolute; left: 50%; top: .08em; width: .36em; transform: translateX(-50%); }
+header.intro { max-width: 1300px; margin: 0 auto; padding: 26px 16px 6px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; }
+.tape { display: inline-block; white-space: nowrap; background: var(--sage); padding: 5px 12px 4px; transform: rotate(-1.5deg); }
+h1 { font: 400 46px/1.05 Newsreader, Georgia, serif; margin-top: 12px; letter-spacing: -.01em; }
+h1 em { color: var(--cobalt); }
+.sub { font-size: 17px; color: #3b3d37; margin-top: 10px; max-width: 540px; }
+.sub mark { background: linear-gradient(transparent 62%, rgba(233,185,167,.95) 62%); color: inherit; padding: 0 2px; }
+.privacy { font-size: 13px; color: var(--soft); margin-top: 10px; }
+header.intro img.collage { width: min(360px, 34vw); height: auto; display: block; }
+header.intro > div { min-width: 0; }
+@media (max-width: 700px) { .tape .more { display: none; } header.intro { grid-template-columns: 1fr 120px; gap: 10px; } h1 { font-size: 36px; } .sub { font-size: 15.5px; } header.intro img.collage { width: 120px; } }
+@media (min-width: 1000px) { h1 { font-size: 60px; } }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; max-width: 1300px; margin: 0 auto; padding: 16px; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+.card { background: var(--paper); border-radius: 4px; padding: 16px; box-shadow: 0 1px 0 rgba(41,43,38,.06), 0 12px 26px -20px rgba(41,43,38,.6); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+button, .btn { font-family: inherit; font-size: 13.5px; font-weight: 500; color: var(--ink); background: transparent; border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 13px; cursor: pointer; line-height: 1.3; }
+.btn { background: var(--ink); color: var(--ivory); font-weight: 600; padding: 7px 16px; }
+button:hover { background: rgba(41,43,38,.06); } .btn:hover { background: #3d4039; }
+button.on { background: var(--ink); color: var(--ivory); border-color: var(--ink); }
+button:disabled { opacity: .35; cursor: default; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: rgba(41,43,38,.07); border-radius: 999px; }
+.seg button { border-color: transparent; }
+.seg button.on { border-color: var(--ink); }
+label.small { font-size: 13px; color: var(--soft); display: inline-flex; align-items: center; gap: 6px; }
+input[type=range] { accent-color: var(--ink); width: 110px; }
+.fade { margin-left: auto; }
+.fade .o { color: var(--or); font-weight: 600; } .fade .b { color: var(--bl); font-weight: 600; }
+h2 { font: 400 11.5px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--soft); margin-bottom: 12px; }
+.side { display: flex; flex-direction: column; gap: 16px; }
+.none, .hint { font-size: 13px; color: var(--soft); line-height: 1.55; }
+.hint { margin-top: 10px; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pane { position: relative; background: #fff; border: 1.5px dashed var(--edge); border-radius: 4px; min-height: 280px; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+.pane.has { border-style: solid; border-color: var(--line); min-height: 0; background: transparent; }
+.pane.drag { border-color: var(--cobalt); background: #EEF1FB; }
+.pane .empty { text-align: center; color: var(--soft); padding: 26px 12px; font-size: 14px; line-height: 1.6; }
+.pane .empty b { display: block; color: var(--ink); font: 400 24px/1.2 Newsreader, serif; margin-bottom: 4px; }
+.pane .empty .btn { margin-top: 12px; display: inline-block; }
+.pane canvas { display: none; max-width: 100%; cursor: crosshair; }
+.pane.has canvas { display: block; }
+.lab { position: absolute; left: 8px; top: 8px; background: var(--paper); padding: 3px 8px 2px; pointer-events: none; }
+.lab.o { box-shadow: inset 3px 0 0 var(--or); } .lab.b { box-shadow: inset 3px 0 0 var(--bl); }
+.swap { position: absolute; right: 8px; top: 8px; font-size: 12px; padding: 3px 10px; background: var(--paper); }
+.pane:not(.has) .swap { display: none; }
+#single { display: none; position: relative; justify-content: center; touch-action: none; }
+#single canvas { display: block; max-width: 100%; cursor: crosshair; border-radius: 2px; }
+.check #single { display: flex; }
+.check.sbs #single { display: none; }
+.check:not(.sbs) .pair { display: none; }
+
+.steps { list-style: none; }
+.steps li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.steps li:last-child { border: 0; }
+.steps .n { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink); font: 600 12px/19px Figtree; text-align: center; }
+.steps li.done .n { background: var(--ink); color: var(--ivory); }
+.steps li.now { font-weight: 600; }
+.steps small { color: var(--soft); display: block; font-size: 12.5px; line-height: 1.4; font-weight: 400; }
+.how { display: flex; gap: 4px; margin: 4px 0 2px; }
+
+.spot { display: grid; grid-template-columns: 1fr auto 26px; gap: 6px; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+.spot:last-child { border: 0; }
+.spot input { font-family: inherit; font-size: 13.5px; border: none; border-bottom: 1px dashed var(--line); background: transparent; color: var(--ink); width: 100%; padding: 2px 0; }
+.spot small { grid-column: 1 / -1; color: var(--soft); font-size: 12.5px; margin-top: -2px; }
+.spot button { padding: 0 7px; font-size: 14px; line-height: 20px; }
+.pill { font: 600 12px Figtree; padding: 2px 9px; border-radius: 999px; background: var(--coral); white-space: nowrap; }
+.pill.ok { background: var(--sage); }
+.pill.wait { background: transparent; border: 1px dashed var(--edge); font-weight: 500; color: var(--soft); }
+
+.ruler { position: relative; height: 26px; margin: 30px 0 30px; border-radius: 2px; border: 1px solid var(--edge); background: linear-gradient(90deg, #000, #fff); }
+.ruler .span { position: absolute; height: 5px; border-radius: 3px; }
+.ruler .span.o { top: -11px; background: var(--or); } .ruler .span.b { bottom: -11px; background: var(--bl); }
+.ruler .mk { position: absolute; transform: translateX(-50%); font: 600 12px Figtree; white-space: nowrap; }
+.ruler .mk.o { top: -30px; color: var(--or); } .ruler .mk.b { bottom: -30px; color: var(--bl); }
+.ruler .end { position: absolute; top: 50%; transform: translateY(-50%); font: 400 11px 'DM Mono', monospace; } .ruler .end.l { left: 6px; color: #fff; } .ruler .end.r { right: 6px; color: var(--ink); }
+.vrow { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+.vrow:last-of-type { border: 0; }
+.vrow span:last-child { white-space: nowrap; } .vrow .o { color: var(--or); font-weight: 600; } .vrow .b { color: var(--bl); font-weight: 600; }
+.say { font-size: 14px; background: var(--ivory); padding: 8px 10px; border-radius: 3px; margin-top: 10px; }
+.cta { width: 100%; background: var(--ink); color: var(--ivory); padding: 10px; font-weight: 600; }
+.cta:hover { background: #3d4039; }
+.pane.has .empty { display: none; }
+#app:not(.check) .when-check { display: none !important; } #app.check .when-align { display: none !important; }
+
+footer { margin-top: 50px; background: var(--ink); color: var(--ivory); padding: 40px 20px 44px; text-align: center; }
+footer .wordmark { font-size: 34px; display: inline-block; }
+footer .mono { color: #d9d3c4; margin-top: 10px; text-transform: none; }
+footer p { margin: 18px auto 0; max-width: 640px; font-size: 13px; color: #d9d3c4; line-height: 1.6; }
+</style>
+<style id="site-menu">
+  
+  .sx-site { position: sticky; top: 0; z-index: 50; background: rgba(241,235,221,.94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom: 1px solid rgba(41,43,38,.12); font-family: Figtree, system-ui, sans-serif; color: #292B26; }
+  .sx-row { max-width: var(--sx-w, 1080px); margin: 0 auto; padding: 0 20px; height: 62px; display: flex; align-items: center; gap: 28px; }
+  .sx-wm { font: 800 26px/1 Figtree, sans-serif; letter-spacing: -.045em; position: relative; text-decoration: none; color: inherit; margin-right: auto; transition: opacity .2s; }
+  .sx-wm .i { position: relative; } .sx-wm svg { position: absolute; left: 50%; top: .08em; width: .36em; transform: translateX(-50%); color: #EF7A56; }
+  .sx-nav { display: flex; gap: 26px; font: 500 15px Figtree, sans-serif; }
+  .sx-nav a { text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; color: inherit; white-space: nowrap; }
+  .sx-nav a:hover { border-bottom-color: rgba(41,43,38,.3); }
+  .sx-n { font: italic 400 14px Newsreader, Georgia, serif; color: #5F615A; margin-right: 6px; }
+  .sx-nav a.on { border-bottom-color: #E9B9A7; font-weight: 600; }
+  .sx-soc { display: flex; gap: 12px; } .sx-soc a { color: inherit; display: flex; }
+  .sx-menu { display: none; align-items: center; gap: 8px; font: 600 14px Figtree, sans-serif; border: 1.5px solid #292B26; border-radius: 999px; padding: 8px 14px; background: transparent; color: inherit; cursor: pointer; }
+  .sx-menu i { display: block; width: 14px; height: 9px; border-top: 1.6px solid; border-bottom: 1.6px solid; position: relative; }
+  .sx-menu i::after { content: ""; position: absolute; left: 0; right: 0; top: 2.2px; border-top: 1.6px solid; }
+  .sx-cta { display: inline-flex; background: #292B26; color: #F1EBDD; text-decoration: none; font: 600 14px Figtree, sans-serif; padding: 10px 18px; border-radius: 999px; white-space: nowrap; }
+  .sx-sub { border-top: 1px dashed rgba(41,43,38,.18); }
+  .sx-sub .sx-row { height: 42px; gap: 22px; font: 400 12px 'DM Mono', monospace; letter-spacing: .14em; text-transform: uppercase; overflow-x: auto; scrollbar-width: none; }
+  .sx-sub .sx-row::-webkit-scrollbar { display: none; }
+  .sx-sub b { font-weight: 400; color: #5F615A; white-space: nowrap; }
+  .sx-sub nav { display: flex; gap: 22px; }
+  .sx-sub a { text-decoration: none; color: inherit; white-space: nowrap; padding: 4px 9px; margin: 0 -9px; }
+  .sx-sub a.on { background: #D9E2D5; }
+  .sx-sub .sx-tool { display: inline-flex; align-items: center; gap: 7px; } .sx-sub .sx-tool img { width: 18px; height: 18px; }
+  .sx-sheet { display: none; position: fixed; inset: 0; z-index: 60; background: #F1EBDD; padding: 0 20px 30px; overflow: auto; font-family: Figtree, system-ui, sans-serif; color: #292B26; }
+  .sx-sheet .sx-row { padding: 0; }
+  .sx-close { margin-left: auto; font: 600 14px Figtree, sans-serif; border: 1.5px solid #292B26; border-radius: 999px; padding: 8px 14px; background: transparent; color: inherit; cursor: pointer; }
+  .sx-way { display: block; text-decoration: none; color: inherit; padding: 20px 0 18px; border-bottom: 1px dashed rgba(41,43,38,.25); }
+  .sx-way .sx-n { display: inline-flex; width: 30px; height: 30px; border: 1.5px solid; border-radius: 50%; align-items: center; justify-content: center; font-size: 15px; color: inherit; margin-right: 12px; vertical-align: 5px; }
+  .sx-way b { font: 400 34px/1.1 Newsreader, Georgia, serif; }
+  .sx-way small { display: block; font: 400 12px 'DM Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: #5F615A; margin: 8px 0 0 42px; }
+  .sx-way.on b { background: linear-gradient(transparent 62%, rgba(233,185,167,.95) 62%); }
+  .sx-tools { margin: 6px 0 0 42px; display: grid; gap: 4px; }
+  .sx-tools a { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; font: 500 17px Figtree, sans-serif; padding: 6px 0; } .sx-tools img { width: 26px; height: 26px; }
+  .sx-follow { margin-top: 26px; display: flex; gap: 10px; } .sx-follow a { display: inline-flex; gap: 8px; align-items: center; border: 1.5px solid #292B26; border-radius: 999px; padding: 10px 16px; text-decoration: none; color: inherit; font: 600 14px Figtree, sans-serif; }
+  .sx-art { display: block; width: 78%; max-width: 420px; margin: 34px auto 0; height: auto; }
+  html.sx-open { overflow: hidden; } html.sx-open .sx-sheet { display: block; }
+  .sx-watch .sx-site .sx-wm { opacity: 0; pointer-events: none; } .sx-watch.sx-past .sx-site .sx-wm { opacity: 1; pointer-events: auto; }
+  .sx-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 22px 30px; max-width: 760px; margin: 28px auto 0; text-align: left; font-family: Figtree, system-ui, sans-serif; }
+  .sx-map h4 { margin: 0 0 8px; font: 400 11px 'DM Mono', monospace; letter-spacing: .16em; text-transform: uppercase; color: #bdb6a6; }
+  .sx-map a { display: block; color: #F1EBDD; text-decoration: none; font-size: 15px; padding: 3px 0; } .sx-map a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 760px) { .sx-nav, .sx-soc, .sx-sub b { display: none; } .sx-menu { display: inline-flex; } .sx-row { gap: 10px; } .sx-wm { font-size: 24px; } }
+</style>
+</head>
+<body>
+
+<header class="sx-site"><div class="sx-row">
+  <a class="sx-wm" href="https://unwakingart.github.io/" data-site aria-label="unwakingart, home">unwak<span class="i">ı<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 C10.8 6.5 13.5 9.2 20 10 C13.5 10.8 10.8 13.5 10 20 C9.2 13.5 6.5 10.8 0 10 C6.5 9.2 9.2 6.5 10 0Z" fill="currentColor"/></svg></span>ngart</a>
+  <nav class="sx-nav" aria-label="unwakingart"><a href="https://unwakingart.github.io/trips/" data-site><span class="sx-n">01</span>Study trips</a><a href="https://unwakingart.github.io/value-finder/" data-site class="on"><span class="sx-n">02</span>Free tools</a></nav>
+  <div class="sx-soc"><a href="https://www.instagram.com/unwakingart/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.tiktok.com/@unwakingart" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.6 3c.4 2.3 1.9 3.8 4.2 4v3.1c-1.6 0-3-.5-4.2-1.3v6.4c0 3.4-2.6 5.8-5.8 5.8S5 18.6 5 15.3c0-3.3 2.8-5.9 6.2-5.6v3.2c-1.6-.3-3 .8-3 2.4 0 1.4 1.1 2.5 2.6 2.5 1.5 0 2.6-1.1 2.6-2.6V3h3.2Z"/></svg></a></div>
+  <button class="sx-menu" type="button" aria-expanded="false" aria-controls="sx-sheet"><i></i>Menu</button>
+</div><div class="sx-sub"><div class="sx-row"><b>Free art tools</b><nav aria-label="Art tools"><a class="sx-tool" href="https://unwakingart.github.io/value-finder/" data-site><img src="https://unwakingart.github.io/value-finder/icon.png" width="18" height="18" alt="">Value Finder</a><a class="sx-tool" href="https://unwakingart.github.io/face-planes/" data-site><img src="https://unwakingart.github.io/face-planes/icon.png" width="18" height="18" alt="">Face Planes</a><a class="sx-tool on" href="https://unwakingart.github.io/drawing-checker/" data-site aria-current="page"><img src="https://unwakingart.github.io/drawing-checker/icon.png" width="18" height="18" alt="">Drawing Checker</a><a class="sx-tool" href="https://unwakingart.github.io/downloads/" data-site><img src="https://unwakingart.github.io/downloads/icon.png" width="18" height="18" alt="">Downloads</a></nav></div></div></header>
+<div class="sx-sheet" id="sx-sheet" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="sx-row"><a class="sx-wm" href="https://unwakingart.github.io/" data-site aria-label="unwakingart, home">unwak<span class="i">ı<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 C10.8 6.5 13.5 9.2 20 10 C13.5 10.8 10.8 13.5 10 20 C9.2 13.5 6.5 10.8 0 10 C6.5 9.2 9.2 6.5 10 0Z" fill="currentColor"/></svg></span>ngart</a><button class="sx-close" type="button">Close ✕</button></div>
+  <a class="sx-way" href="https://unwakingart.github.io/trips/" data-site><span class="sx-n">01</span><b>Art study trips</b><small>Hanoi · March 2027</small></a>
+  <div class="sx-way on"><span class="sx-n">02</span><b>Free art tools</b><div class="sx-tools"><a href="https://unwakingart.github.io/value-finder/" data-site><img src="https://unwakingart.github.io/value-finder/icon.png" width="26" height="26" alt="">Value Finder</a><a href="https://unwakingart.github.io/face-planes/" data-site><img src="https://unwakingart.github.io/face-planes/icon.png" width="26" height="26" alt="">Face Planes</a><a href="https://unwakingart.github.io/drawing-checker/" data-site><img src="https://unwakingart.github.io/drawing-checker/icon.png" width="26" height="26" alt="">Drawing Checker</a><a href="https://unwakingart.github.io/downloads/" data-site><img src="https://unwakingart.github.io/downloads/icon.png" width="26" height="26" alt="">Downloads</a></div></div>
+  <div class="sx-follow"><a href="https://www.instagram.com/unwakingart/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg> Instagram</a><a href="https://www.tiktok.com/@unwakingart" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.6 3c.4 2.3 1.9 3.8 4.2 4v3.1c-1.6 0-3-.5-4.2-1.3v6.4c0 3.4-2.6 5.8-5.8 5.8S5 18.6 5 15.3c0-3.3 2.8-5.9 6.2-5.6v3.2c-1.6-.3-3 .8-3 2.4 0 1.4 1.1 2.5 2.6 2.5 1.5 0 2.6-1.1 2.6-2.6V3h3.2Z"/></svg> TikTok</a></div>
+  <img class="sx-art" src="https://unwakingart.github.io/images/collage-face.webp" width="860" height="460" alt="" loading="lazy">
+</div>
+<script>
+(function () {
+  var h = document.documentElement, b = document.querySelector('.sx-menu'), s = document.getElementById('sx-sheet');
+  function set(open) { h.classList.toggle('sx-open', open); b.setAttribute('aria-expanded', open); if (open) s.querySelector('.sx-close').focus(); else b.focus(); }
+  b.addEventListener('click', function () { set(true); });
+  s.querySelector('.sx-close').addEventListener('click', function () { set(false); });
+  s.addEventListener('click', function (e) { if (e.target.closest('a[href*="#"]')) set(false); });
+  document.addEventListener('keydown', function (e) {
+    if (!h.classList.contains('sx-open')) return;
+    if (e.key === 'Escape') set(false);
+    if (e.key === 'Tab') {
+      var f = s.querySelectorAll('a[href], button'), first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    }
+  });
+  var wide = window.matchMedia('(min-width: 761px)');
+  function shut() { if (wide.matches && h.classList.contains('sx-open')) { h.classList.remove('sx-open'); b.setAttribute('aria-expanded', false); } }
+  if (wide.addEventListener) wide.addEventListener('change', shut); else wide.addListener(shut);
+
+  function watch() {
+    var big = document.querySelector('.sx-home .top .wordmark');
+    if (big && 'IntersectionObserver' in window) { document.body.classList.add('sx-watch'); new IntersectionObserver(function (es) { document.body.classList.toggle('sx-past', !es[0].isIntersecting); }).observe(big); }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+})();
+</script>
+
+<header class="intro">
+  <div>
+    <span class="mono tape">Art tools<span class="more"> · Look a little closer</span></span>
+    <h1>The photo <em>vs.</em> your drawing</h1>
+    <p class="sub">Put your drawing over the photo you drew from. See <mark>where the shape drifts</mark>, and whether your darks are as dark as the photo's.</p>
+    <p class="privacy">Free to use. Your pictures stay on your device: nothing is uploaded.</p>
+  </div>
+  <img class="collage" src="collage.webp" width="1000" height="733" alt="A collage: a face from Rubens's drawing book printed twice, in orange and in blue, slightly off from each other, with a coral star">
+</header>
+<main id="app">
+  <section class="card">
+    <div class="toolbar">
+      <span class="seg when-check" id="views">
+        <button data-view="overlay" class="on">Overlay</button>
+        <button data-view="sbs">Side by side</button>
+        <button data-view="values">Values</button>
+      </span>
+      <button class="when-check" id="addSpot">+ Add a spot</button>
+      <button class="when-check" id="back">Move the points</button>
+      <label class="small fade when-check" id="fadeBox"><span class="o">photo</span><input type="range" id="fade" min="0" max="100" value="50"><span class="b">drawing</span></label>
+      <span class="when-align none" id="tip">Open both pictures to start.</span>
+    </div>
+    <div class="pair">
+      <div class="pane" id="paneP">
+        <div class="empty"><b>The photo</b>the reference you drew from<br><label class="btn">Open the photo<input type="file" accept="image/*" hidden></label><br><small>or drop it here</small></div>
+        <canvas></canvas><span class="lab mono o">The photo</span><label class="swap">Change<input type="file" accept="image/*" hidden></label>
+      </div>
+      <div class="pane" id="paneD">
+        <div class="empty"><b>Your drawing</b>a straight-on photo or scan<br><label class="btn">Open your drawing<input type="file" accept="image/*" hidden></label><br><small>or drop it here</small></div>
+        <canvas></canvas><span class="lab mono b">Your drawing</span><label class="swap">Change<input type="file" accept="image/*" hidden></label>
+      </div>
+    </div>
+    <div id="single"><canvas id="big"></canvas></div>
+    <p class="hint when-align" id="alignHint">Line them up: tap the 4 corners of the box around the picture on each, in the same order (top left, top right, bottom right, bottom left). Drag a dot to move it.</p>
+    <p class="hint when-check" id="checkHint">Overlay: the photo is orange and your drawing is blue; where they match, they print over each other. Slide toward one to see it alone.<br>Add a spot: tap a place in the photo, then the same place in your drawing. The distance between them is shown as a % of the picture's height. Drag a dot to move it.</p>
+  </section>
+  <aside class="side">
+    <div class="card when-align">
+      <h2>Line them up</h2>
+      <ol class="steps" id="steps">
+        <li id="s1"><span class="n">1</span><div>Open the photo<small>the reference you drew from</small></div></li>
+        <li id="s2"><span class="n">2</span><div>Open your drawing<small>a straight-on photo or scan of the page</small></div></li>
+        <li id="s3"><span class="n">3</span><div>Tap the same points on each
+          <div class="seg how" id="how"><button data-n="4" class="on">4 box corners</button><button data-n="2">2 spots</button></div>
+          <small id="howTxt">The corners of the box around the picture, as on the pages of the drawing notebook.</small></div></li>
+      </ol>
+      <button class="cta" id="go" disabled style="margin-top:12px">Compare</button>
+    </div>
+    <div class="card when-check">
+      <h2>Shape</h2>
+      <div id="spots"><div class="none">No spots yet. Tap <b>+ Add a spot</b>, then a place in the photo and the same place in your drawing: the tip of the nose, a corner of the mouth, the chin.</div></div>
+    </div>
+    <div class="card when-check">
+      <h2>Values</h2>
+      <div class="ruler" id="ruler"></div>
+      <div id="vals"></div>
+      <p class="say" id="say"></p>
+      <p class="none" style="margin-top:8px">0 is black, 10 is white, as in the Value Finder. A phone photo of paper often reads gray, so scan your drawing or shoot it in even daylight.</p>
+    </div>
+    <button class="cta when-check" id="save">Save as a picture</button>
+  </aside>
+</main>
+<footer>
+  <a class="wordmark" href="https://unwakingart.github.io/" data-site aria-label="unwakingart">unwak<span class="i">ı<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 C10.8 6.5 13.5 9.2 20 10 C13.5 10.8 10.8 13.5 10 20 C9.2 13.5 6.5 10.8 0 10 C6.5 9.2 9.2 6.5 10 0Z" fill="currentColor"/></svg></span>ngart</a>
+  <div class="mono">a little outside the lines</div>
+  <p>Values use the painters' 0–10 scale (0 black, 10 white), the same as the Value Finder. Collage: a face from Rubens's drawing book, engraving, Rijksmuseum (public domain).</p>
+  <div class="sx-map"><div><h4>Art study trips</h4><a href="https://unwakingart.github.io/trips/" data-site>Oil Painting in Hanoi</a><a href="https://unwakingart.github.io/trips/#payment" data-site>How to apply</a></div><div><h4>Free art tools</h4><a href="https://unwakingart.github.io/value-finder/" data-site>Value Finder</a><a href="https://unwakingart.github.io/face-planes/" data-site>Face Planes</a><a href="https://unwakingart.github.io/drawing-checker/" data-site>Drawing Checker</a><a href="https://unwakingart.github.io/downloads/" data-site>Downloads</a></div><div><h4>About</h4><a href="https://unwakingart.github.io/michelle/" data-site>My art journey</a></div><div><h4>Follow</h4><a href="https://www.instagram.com/unwakingart/" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@unwakingart" target="_blank" rel="noopener">TikTok</a></div></div>
+  <p>@unwakingart on <a href="https://www.instagram.com/unwakingart/" target="_blank" rel="noopener">Instagram</a> and <a href="https://www.tiktok.com/@unwakingart" target="_blank" rel="noopener">TikTok</a></p>
+</footer>
+<script>
+const $ = s => document.querySelector(s);
+const OR = [239, 122, 86], BL = [46, 78, 160], PAPER = [246, 240, 226];
+const toV = L => L / 25.5;
+const fmt = v => (Math.round(v * 10) / 10).toString();
+const app = $('#app');
+
+const pics = { P: null, D: null };
+let need = 4;
+const panes = { P: $('#paneP'), D: $('#paneD') };
+
+function loadFile(which, file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight));
+    const W = Math.round(im.naturalWidth * k), H = Math.round(im.naturalHeight * k);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(im, 0, 0, W, H);
+    pics[which] = { c, W, H, pts: [] }; URL.revokeObjectURL(url);
+    panes[which].classList.add('has'); leaveCheck(); layoutPanes(); refreshSteps();
+  };
+  im.src = url;
+}
+for (const w of ['P', 'D']) {
+  const p = panes[w];
+  p.querySelectorAll('input[type=file]').forEach(i => i.onchange = e => { loadFile(w, e.target.files[0]); e.target.value = ''; });
+  p.addEventListener('dragover', e => { e.preventDefault(); p.classList.add('drag'); });
+  p.addEventListener('dragleave', () => p.classList.remove('drag'));
+  p.addEventListener('drop', e => { e.preventDefault(); p.classList.remove('drag'); loadFile(w, e.dataTransfer.files[0]); });
+}
+document.addEventListener('paste', e => {
+  const f = [...(e.clipboardData || {}).files || []].find(f => f.type.startsWith('image/')); if (!f) return;
+  loadFile(!pics.P ? 'P' : 'D', f);
+});
+
+function fitCanvas(cv, W, H, maxW, maxH) {
+  const k = Math.min(maxW / W, maxH / H), dpr = window.devicePixelRatio || 1;
+  cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  cv.width = Math.round(W * k * dpr); cv.height = Math.round(H * k * dpr);
+  const ctx = cv.getContext('2d'); ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  return { ctx, k };
+}
+const maxH = () => Math.max(320, window.innerHeight - 190 - ((document.querySelector('.sx-site') || { offsetHeight: 60 }).offsetHeight));
+function layoutPanes() {
+  for (const w of ['P', 'D']) {
+    const pic = pics[w]; if (!pic) continue;
+    const src = inCheck ? warped[w].c : pic.c, W = inCheck ? F.W : pic.W, H = inCheck ? F.H : pic.H;
+    const cv = panes[w].querySelector('canvas');
+    panes[w].view = { ...fitCanvas(cv, W, H, panes[w].clientWidth - 4, maxH()), W, H };
+  }
+  if (inCheck) { const b = $('#big'); bigView = { ...fitCanvas(b, F.W, F.H, $('#single').clientWidth || app.querySelector('.card').clientWidth - 32, maxH()), W: F.W, H: F.H }; }
+  drawAll();
+}
+
+const ORDER = ['top left', 'top right', 'bottom right', 'bottom left'];
+function dot(ctx, x, y, u, fill, label) {
+  ctx.beginPath(); ctx.arc(x, y, 9 * u, 0, 7); ctx.fillStyle = fill; ctx.fill();
+  ctx.lineWidth = 2.5 * u; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.lineWidth = 1 * u; ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.stroke();
+  if (label) { ctx.fillStyle = '#fff'; ctx.font = `700 ${11 * u}px Figtree, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, y + .5 * u); }
+}
+function drawAlign(w) {
+  const pic = pics[w], v = panes[w].view; if (!pic || !v) return;
+  const { ctx, k } = v, u = 1 / k;
+  ctx.clearRect(0, 0, pic.W, pic.H); ctx.drawImage(pic.c, 0, 0);
+  const col = w === 'P' ? `rgb(${OR})` : `rgb(${BL})`;
+  if (need === 4 && pic.pts.length > 1) {
+    ctx.beginPath(); pic.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    if (pic.pts.length === 4) ctx.closePath();
+    ctx.lineWidth = 2 * u; ctx.strokeStyle = col; ctx.setLineDash([6 * u, 4 * u]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  pic.pts.forEach((p, i) => dot(ctx, p[0], p[1], u, col, String(i + 1)));
+}
+function refreshSteps() {
+  const has = w => !!pics[w], full = w => pics[w] && pics[w].pts.length === need;
+  $('#s1').className = has('P') ? 'done' : 'now';
+  $('#s2').className = has('D') ? 'done' : has('P') ? 'now' : '';
+  $('#s3').className = full('P') && full('D') ? 'done' : has('P') && has('D') ? 'now' : '';
+  $('#go').disabled = !(full('P') && full('D'));
+  let t = 'Open both pictures to start.';
+  if (has('P') && has('D')) {
+    const w = !full('P') ? 'P' : !full('D') ? 'D' : null;
+    t = !w ? 'Ready: tap Compare.' : need === 4 ? `Tap the ${ORDER[pics[w].pts.length]} corner on ${w === 'P' ? 'the photo' : 'your drawing'}.`
+      : `Tap spot ${pics[w].pts.length + 1} of 2 on ${w === 'P' ? 'the photo' : 'your drawing'}.`;
+  }
+  $('#tip').textContent = t;
+  drawAll();
+}
+document.querySelectorAll('#how button').forEach(b => b.onclick = () => {
+  need = +b.dataset.n; document.querySelectorAll('#how button').forEach(x => x.classList.toggle('on', x === b));
+  $('#howTxt').textContent = need === 4 ? 'The corners of the box around the picture, as on the pages of the drawing notebook.'
+    : 'Two places you can find in both, far apart: the inner corner of an eye and the chin.';
+  $('#alignHint').textContent = need === 4 ? 'Line them up: tap the 4 corners of the box around the picture on each, in the same order (top left, top right, bottom right, bottom left). Drag a dot to move it.'
+    : 'Line them up: tap two places you can find in both, in the same order on each, as far apart as you can (an eye corner, then the chin). Drag a dot to move it.';
+  for (const w of ['P', 'D']) if (pics[w]) pics[w].pts = pics[w].pts.slice(0, need);
+  refreshSteps();
+});
+
+function pos(e, cv, v) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * v.W, (e.clientY - r.top) / r.height * v.H]; }
+let drag = null;
+function near(list, p, v, tol = 16) { const t = tol / v.k; let best = -1, bd = t; list.forEach((q, i) => { if (!q) return; const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < bd) { bd = d; best = i; } }); return best; }
+for (const w of ['P', 'D']) {
+  const cv = panes[w].querySelector('canvas');
+  cv.addEventListener('pointerdown', e => {
+    const v = panes[w].view; if (!v) return; const p = pos(e, cv, v);
+    if (!inCheck) {
+      const pts = pics[w].pts, i = near(pts, p, v);
+      if (i >= 0) drag = { list: pts, i, cv, v, after: refreshSteps };
+      else if (pts.length < need) { pts.push(p); refreshSteps(); drag = { list: pts, i: pts.length - 1, cv, v, after: refreshSteps }; }
+    } else spotPointer(w, p, v, cv);
+    if (drag) cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => { if (!drag || drag.cv !== cv) return; const p = pos(e, cv, drag.v); drag.list[drag.i][0] = Math.max(0, Math.min(drag.v.W, p[0])); drag.list[drag.i][1] = Math.max(0, Math.min(drag.v.H, p[1])); drag.after(); });
+  cv.addEventListener('pointerup', () => { if (drag && drag.cv === cv) { drag = null; if (inCheck) renderSpots(); } });
+}
+
+let inCheck = false, F = null, warped = {}, bigView = null, view = 'overlay';
+function solve(A, b) {
+  const n = b.length; A = A.map((r, i) => [...r, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let m = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+    [A[c], A[m]] = [A[m], A[c]];
+    for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+  }
+  return A.map((r, i) => r[n] / r[i]);
+}
+function homography(from, to) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = from[i], [u, v] = to[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  const h = solve(A, b);
+  return (x, y) => { const w = h[6] * x + h[7] * y + 1; return [(h[0] * x + h[1] * y + h[2]) / w, (h[3] * x + h[4] * y + h[5]) / w]; };
+}
+function similarity(from, to) {
+  const [a1, a2] = from, [b1, b2] = to;
+  const fx = a2[0] - a1[0], fy = a2[1] - a1[1], tx = b2[0] - b1[0], ty = b2[1] - b1[1], d = fx * fx + fy * fy;
+  const re = (tx * fx + ty * fy) / d, im = (ty * fx - tx * fy) / d;
+  return (x, y) => { const dx = x - a1[0], dy = y - a1[1]; return [b1[0] + re * dx - im * dy, b1[1] + im * dx + re * dy]; };
+}
+function warp(pic, map, W, H) {
+  const src = pic.c.getContext('2d').getImageData(0, 0, pic.W, pic.H).data, sw = pic.W, sh = pic.H;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const cx = c.getContext('2d'), out = cx.createImageData(W, H), o = out.data, lum = new Float32Array(W * H), inside = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const [sx, sy] = map(x + .5, y + .5), i = y * W + x;
+    if (!(sx >= 0 && sy >= 0 && sx < sw - 1 && sy < sh - 1)) { o[i * 4 + 3] = 0; continue; }
+    const x0 = sx | 0, y0 = sy | 0, fx = sx - x0, fy = sy - y0, p = (y0 * sw + x0) * 4, q = p + sw * 4;
+    for (let k = 0; k < 3; k++) o[i * 4 + k] = (src[p + k] * (1 - fx) + src[p + 4 + k] * fx) * (1 - fy) + (src[q + k] * (1 - fx) + src[q + 4 + k] * fx) * fy;
+    o[i * 4 + 3] = 255; inside[i] = 1;
+    lum[i] = .299 * o[i * 4] + .587 * o[i * 4 + 1] + .114 * o[i * 4 + 2];
+  }
+  cx.putImageData(out, 0, 0);
+  return { c, lum, inside };
+}
+function pct(w, q) {
+  const a = []; const { lum, inside } = warped[w];
+  for (let i = 0; i < lum.length; i += 3) if (inside[i]) a.push(lum[i]);
+  a.sort((x, y) => x - y); return a.length ? a[Math.min(a.length - 1, Math.floor(q * a.length))] : 0;
+}
+function compare() {
+  const P = pics.P, D = pics.D, MAX = 1000;
+  if (need === 4) {
+    const q = P.pts, d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+    let w = (d(q[0], q[1]) + d(q[3], q[2])) / 2, h = (d(q[0], q[3]) + d(q[1], q[2])) / 2; const k = MAX / Math.max(w, h);
+    F = { W: Math.round(w * k), H: Math.round(h * k) };
+    const rect = [[0, 0], [F.W, 0], [F.W, F.H], [0, F.H]];
+    warped.P = warp(P, homography(rect, P.pts), F.W, F.H);
+    warped.D = warp(D, homography(rect, D.pts), F.W, F.H);
+  } else {
+    const k = Math.min(1, MAX / Math.max(P.W, P.H));
+    F = { W: Math.round(P.W * k), H: Math.round(P.H * k) };
+    warped.P = warp(P, (x, y) => [x / k, y / k], F.W, F.H);
+    warped.D = warp(D, similarity(P.pts.map(p => [p[0] * k, p[1] * k]), D.pts), F.W, F.H);
+  }
+  for (const w of ['P', 'D']) { warped[w].dark = pct(w, .01); warped[w].light = pct(w, .99); }
+  makeLayers();
+  inCheck = true; app.classList.add('check'); setView(view); renderSpots(); renderValues();
+}
+function leaveCheck() { if (!inCheck) return; inCheck = false; app.classList.remove('check', 'sbs'); spots = []; pending = null; layoutPanes(); }
+$('#go').onclick = compare;
+$('#back').onclick = () => { leaveCheck(); refreshSteps(); };
+
+let ink = {}, stepsL = {};
+function makeLayers() {
+  for (const w of ['P', 'D']) {
+    const { lum, inside, light } = warped[w], d = new Float32Array(lum.length), s = new Float32Array(lum.length), top = Math.max(1, light);
+    for (let i = 0; i < lum.length; i++) {
+      d[i] = inside[i] ? Math.min(1, Math.max(0, 1 - lum[i] / top) * 1.3) : 0;
+      s[i] = Math.round(toV(lum[i])) * 25.5;
+    }
+    ink[w] = d; stepsL[w] = s;
+  }
+}
+function riso(t) {
+  const c = document.createElement('canvas'); c.width = F.W; c.height = F.H;
+  const cx = c.getContext('2d'), out = cx.createImageData(F.W, F.H), o = out.data;
+  const wp = Math.min(1, 2 * (1 - t)), wd = Math.min(1, 2 * t);
+  for (let i = 0; i < F.W * F.H; i++) {
+    const a = ink.P[i] * wp, b = ink.D[i] * wd;
+    for (let k = 0; k < 3; k++) o[i * 4 + k] = PAPER[k] * (1 - a * (1 - OR[k] / 255)) * (1 - b * (1 - BL[k] / 255));
+    o[i * 4 + 3] = 255;
+  }
+  cx.putImageData(out, 0, 0); return c;
+}
+function valueLayer(w) {
+  const c = document.createElement('canvas'); c.width = F.W; c.height = F.H;
+  const cx = c.getContext('2d'), out = cx.createImageData(F.W, F.H), o = out.data, s = stepsL[w], inside = warped[w].inside;
+  for (let i = 0; i < s.length; i++) { o[i * 4] = o[i * 4 + 1] = o[i * 4 + 2] = s[i]; o[i * 4 + 3] = inside[i] ? 255 : 0; }
+  cx.putImageData(out, 0, 0); return c;
+}
+let overlayC = null, valC = {};
+function setView(v) {
+  view = v; document.querySelectorAll('#views button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  app.classList.toggle('sbs', v !== 'overlay'); $('#fadeBox').style.visibility = v === 'overlay' ? 'visible' : 'hidden';
+  if (v === 'overlay') overlayC = riso($('#fade').value / 100);
+  if (v === 'values') { valC.P = valueLayer('P'); valC.D = valueLayer('D'); }
+  layoutPanes();
+}
+document.querySelectorAll('#views button').forEach(b => b.onclick = () => setView(b.dataset.view));
+$('#fade').oninput = () => { overlayC = riso($('#fade').value / 100); drawAll(); };
+
+let spots = [], pending = null, adding = false;
+$('#addSpot').onclick = () => { adding = !adding; $('#addSpot').classList.toggle('on', adding); $('#addSpot').textContent = adding ? 'Tap the photo first' : '+ Add a spot'; };
+function spotPointer(w, p, v, cv) {
+
+  const kinds = pending ? [] : cv === $('#big') ? ['p', 'd'] : [w === 'P' ? 'p' : 'd'];
+  for (const k of kinds) {
+    const i = near(spots.map(s => s[k]), p, v);
+    if (i >= 0) { drag = { list: spots.map(s => s[k]), i, cv, v, after: () => { renderSpots(true); drawAll(); } }; return; }
+  }
+  if (!adding) return;
+  const want = pending ? 'd' : 'p';
+  if (cv !== $('#big') && (want === 'p') !== (w === 'P')) return;
+  if (!pending) { pending = { name: `Spot ${spots.length + 1}`, p, d: null }; spots.push(pending); $('#addSpot').textContent = 'Now the same place in your drawing'; }
+  else { pending.d = p; pending = null; adding = false; $('#addSpot').classList.remove('on'); $('#addSpot').textContent = '+ Add a spot'; }
+  renderSpots(); drawAll();
+}
+function sampleV(w, p) {
+  const { lum, inside } = warped[w], r = Math.max(2, Math.round(F.H / 250)); let s = 0, n = 0;
+  for (let y = Math.max(0, Math.round(p[1]) - r); y <= Math.min(F.H - 1, Math.round(p[1]) + r); y++)
+    for (let x = Math.max(0, Math.round(p[0]) - r); x <= Math.min(F.W - 1, Math.round(p[0]) + r); x++) { const i = y * F.W + x; if (inside[i]) { s += lum[i]; n++; } }
+  return n ? toV(s / n) : null;
+}
+const off = s => Math.hypot(s.p[0] - s.d[0], s.p[1] - s.d[1]) / F.H * 100;
+function renderSpots(numbersOnly) {
+  const box = $('#spots');
+  if (!spots.length) { box.innerHTML = '<div class="none">No spots yet. Tap <b>+ Add a spot</b>, then a place in the photo and the same place in your drawing: the tip of the nose, a corner of the mouth, the chin.</div>'; return; }
+  if (numbersOnly && box.children.length === spots.length) {
+    spots.forEach((s, i) => { const r = box.children[i]; r.querySelector('.pill').outerHTML = pill(s); r.querySelector('small').innerHTML = vline(s); }); renderValues(); return;
+  }
+  box.innerHTML = '';
+  spots.forEach((s, i) => {
+    const r = document.createElement('div'); r.className = 'spot';
+    r.innerHTML = `<input value="${s.name.replace(/"/g, '&quot;')}" aria-label="Name this spot">${pill(s)}<button title="Remove">×</button><small>${vline(s)}</small>`;
+    r.querySelector('input').oninput = e => { s.name = e.target.value; drawAll(); renderValues(); };
+    r.querySelector('button').onclick = () => { spots.splice(i, 1); if (pending === s) { pending = null; adding = false; $('#addSpot').classList.remove('on'); $('#addSpot').textContent = '+ Add a spot'; } renderSpots(); drawAll(); };
+    box.appendChild(r);
+  });
+  renderValues();
+}
+function pill(s) { if (!s.d) return '<span class="pill wait">tap your drawing</span>'; const o = off(s); return `<span class="pill${o < 2 ? ' ok' : ''}">${o < 1 ? 'under 1' : fmt(o)}% off${o < 2 ? ' ✓' : ''}</span>`; }
+function vline(s) { const a = sampleV('P', s.p), b = s.d ? sampleV('D', s.d) : null; return `Value: photo ${a == null ? '–' : fmt(a)} · yours ${b == null ? '–' : fmt(b)}`; }
+
+function renderValues() {
+  if (!inCheck) return;
+  const pd = toV(warped.P.dark), pl = toV(warped.P.light), dd = toV(warped.D.dark), dl = toV(warped.D.light);
+  const x = v => Math.max(0, Math.min(100, v * 10)) + '%';
+  $('#ruler').innerHTML = '<span class="end l">0</span><span class="end r">10</span>' +
+    `<span class="span o" style="left:${x(pd)};right:${100 - parseFloat(x(pl))}%"></span><span class="span b" style="left:${x(dd)};right:${100 - parseFloat(x(dl))}%"></span>` +
+    `<span class="mk o" style="left:${x(pd)}">${fmt(pd)}</span><span class="mk o" style="left:${x(pl)}">${fmt(pl)}</span>` +
+    `<span class="mk b" style="left:${x(dd)}">${fmt(dd)}</span><span class="mk b" style="left:${x(dl)}">${fmt(dl)}</span>`;
+  let h = `<div class="vrow"><span>Darkest</span><span><span class="o">photo ${fmt(pd)}</span> · <span class="b">yours ${fmt(dd)}</span></span></div>` +
+          `<div class="vrow"><span>Lightest</span><span><span class="o">photo ${fmt(pl)}</span> · <span class="b">yours ${fmt(dl)}</span></span></div>`;
+  spots.filter(s => s.d).forEach(s => { const a = sampleV('P', s.p), b = sampleV('D', s.d); if (a != null && b != null) h += `<div class="vrow"><span>${esc(s.name)}</span><span><span class="o">photo ${fmt(a)}</span> · <span class="b">yours ${fmt(b)}</span></span></div>`; });
+  $('#vals').innerHTML = h;
+  $('#say').textContent = summary(pd, pl, dd, dl);
+}
+const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+function summary(pd, pl, dd, dl) {
+  const lines = [];
+  if (dd - pd >= 1) lines.push(`Your darks stop at ${fmt(dd)}. The photo goes down to ${fmt(pd)}.`);
+  else if (pd - dd >= 1) lines.push(`Your darks go down to ${fmt(dd)}, darker than the photo's ${fmt(pd)}.`);
+  else lines.push(`Your darkest dark matches the photo's (${fmt(pd)} and ${fmt(dd)}).`);
+  if (pl - dl >= 1) lines.push(`Your lightest is ${fmt(dl)}, the photo's ${fmt(pl)}.`);
+  return lines.join(' ');
+}
+
+function drawSpotsOn(ctx, u, kinds) {
+  spots.forEach((s, i) => {
+    if (kinds.includes('p') && kinds.includes('d') && s.d) {
+      ctx.beginPath(); ctx.moveTo(s.p[0], s.p[1]); ctx.lineTo(s.d[0], s.d[1]); ctx.lineWidth = 2.5 * u; ctx.strokeStyle = '#292B26'; ctx.setLineDash([6 * u, 5 * u]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    if (kinds.includes('p')) dot(ctx, s.p[0], s.p[1], u, `rgb(${OR})`, String(i + 1));
+    if (kinds.includes('d') && s.d) dot(ctx, s.d[0], s.d[1], u, `rgb(${BL})`, String(i + 1));
+  });
+}
+function drawAll() {
+  if (!inCheck) { drawAlign('P'); drawAlign('D'); return; }
+  if (view === 'overlay' && bigView) {
+    const { ctx, k } = bigView; ctx.clearRect(0, 0, F.W, F.H); ctx.drawImage(overlayC, 0, 0); drawSpotsOn(ctx, 1 / k, ['p', 'd']);
+  } else for (const w of ['P', 'D']) {
+    const v = panes[w].view; if (!v) continue; const { ctx, k } = v;
+    ctx.clearRect(0, 0, F.W, F.H); ctx.drawImage(view === 'values' ? valC[w] : warped[w].c, 0, 0); drawSpotsOn(ctx, 1 / k, [w === 'P' ? 'p' : 'd']);
+  }
+}
+const big = $('#big');
+big.addEventListener('pointerdown', e => { if (!bigView) return; const p = pos(e, big, bigView); spotPointer(null, p, bigView, big); if (drag) big.setPointerCapture(e.pointerId); });
+big.addEventListener('pointermove', e => { if (!drag || drag.cv !== big) return; const p = pos(e, big, drag.v); drag.list[drag.i][0] = Math.max(0, Math.min(F.W, p[0])); drag.list[drag.i][1] = Math.max(0, Math.min(F.H, p[1])); drag.after(); });
+big.addEventListener('pointerup', () => { if (drag && drag.cv === big) { drag = null; renderSpots(); } });
+
+$('#save').onclick = () => {
+  const pad = 40, h = 900, w = Math.round(h * F.W / F.H), listW = 520, H = h + pad * 2 + 70, W = w * 2 + 20 + listW + pad * 3;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  x.fillStyle = '#F1EBDD'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#292B26'; x.font = '400 40px Newsreader, Georgia, serif'; x.textBaseline = 'alphabetic'; x.fillText('The photo vs. my drawing', pad, pad + 34);
+  const top = pad + 70, k = h / F.H;
+  const panel = (src, X, kinds) => {
+    x.save(); x.translate(X, top); x.scale(k, k); x.fillStyle = '#fff'; x.fillRect(0, 0, F.W, F.H); x.drawImage(src, 0, 0); drawSpotsOn(x, 1 / k, kinds); x.restore();
+  };
+  panel(riso(.5), pad, ['p', 'd']);
+  panel(warped.D.c, pad + w + 20, ['d']);
+  x.font = '600 15px Figtree, sans-serif'; x.fillStyle = '#5F615A';
+  x.fillText('OVERLAY: PHOTO ORANGE, MY DRAWING BLUE', pad, top + h + 26); x.fillText('MY DRAWING', pad + w + 20, top + h + 26);
+  let y = top + 10; const L = pad * 2 + w * 2 + 20;
+  const row = (a, b, col) => { x.font = '400 22px Figtree, sans-serif'; x.fillStyle = '#292B26'; x.fillText(a, L, y); if (b) { x.fillStyle = col || '#292B26'; x.textAlign = 'right'; x.fillText(b, W - pad, y); x.textAlign = 'left'; } y += 36; };
+  const head = t => { x.font = '400 15px "DM Mono", monospace'; x.fillStyle = '#5F615A'; x.fillText(t.toUpperCase().split('').join(String.fromCharCode(8202)), L, y); y += 34; };
+  head('Shape');
+  const done = spots.filter(s => s.d);
+  if (!done.length) row('No spots added');
+  done.forEach(s => { const o = off(s); row(`${spots.indexOf(s) + 1}. ${s.name}`, `${o < 1 ? 'under 1' : fmt(o)}% off`, o < 2 ? '#3f6b3a' : '#B5462A'); });
+  y += 16; head('Values (0 black, 10 white)');
+  const pd = toV(warped.P.dark), pl = toV(warped.P.light), dd = toV(warped.D.dark), dl = toV(warped.D.light);
+  row('Darkest', `photo ${fmt(pd)} · mine ${fmt(dd)}`); row('Lightest', `photo ${fmt(pl)} · mine ${fmt(dl)}`);
+  done.forEach(s => { const a = sampleV('P', s.p), b = sampleV('D', s.d); if (a != null && b != null) row(s.name, `photo ${fmt(a)} · mine ${fmt(b)}`); });
+  x.font = '800 28px Figtree, sans-serif'; x.fillStyle = '#292B26'; x.fillText('unwakingart', L, H - pad - 4);
+  x.font = '400 15px Figtree, sans-serif'; x.fillStyle = '#5F615A'; x.fillText('Drawing Checker · unwakingart.github.io/drawing-checker', L, H - pad + 18);
+  const a = document.createElement('a'); a.download = 'drawing-check.png'; a.href = c.toDataURL('image/png'); a.click();
+};
+
+window.addEventListener('resize', () => layoutPanes());
+refreshSteps();
+</script>
+</body>
+</html>
